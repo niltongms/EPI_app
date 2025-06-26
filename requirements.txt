@@ -5,3 +5,4 @@ flask_sqlalchemy
 flask_login
 flask_wtf
 python-dotenv
+reportlab==4.2.0
