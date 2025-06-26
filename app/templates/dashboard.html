@@ -63,6 +63,7 @@
                 </td>
                 <td>
                   <form method="POST" action="{{ url_for('main.deletar_epi', epi_id=epi.id) }}" style="display:inline;" onsubmit="return confirm('Confirma exclusão?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
                   </form>
                 </td>

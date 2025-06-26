@@ -27,7 +27,7 @@
 
     <h3>Editar EPI</h3>
     <form method="POST">
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-3">
         <label for="nome" class="form-label">Nome</label>
         <input type="text" class="form-control" id="nome" name="nome" value="{{ epi.nome }}" required />
@@ -42,7 +42,7 @@
       </div>
       <div class="mb-3">
         <label for="validade" class="form-label">Validade (opcional)</label>
-        <input type="text" class="form-control" id="validade" name="validade" value="{{ epi.validade }}" placeholder="dd/mm/aaaa" />
+        <input type="date" class="form-control" id="validade" name="validade" value="{{ epi.validade }}" />
       </div>
       <button type="submit" class="btn btn-primary">Salvar</button>
     </form>

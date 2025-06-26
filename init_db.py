@@ -1,13 +1,20 @@
+import os
 from app import create_app, db
 from app.models import User
 from werkzeug.security import generate_password_hash
 
 app = create_app()
 
+instance_path = os.path.join(os.path.dirname(__file__), 'instance')
+if not os.path.exists(instance_path):
+    os.makedirs(instance_path)
+    print("Pasta 'instance' criada.")
+else:
+    print("Pasta 'instance' já existe.")
+
 with app.app_context():
     db.create_all()
 
-    # Cria usuário admin padrão
     if not User.query.filter_by(username='admin').first():
         admin_user = User(
             username='admin',
@@ -19,4 +26,3 @@ with app.app_context():
         print("Usuário admin criado com sucesso (admin/admin123)")
     else:
         print("Usuário admin já existe.")
-        
