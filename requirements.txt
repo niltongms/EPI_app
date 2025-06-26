@@ -1,6 +1,6 @@
 Flask
 gunicorn
-sycopg2-binary
+psycopg2-binary
 flask_sqlalchemy
 flask_login
 flask_wtf
