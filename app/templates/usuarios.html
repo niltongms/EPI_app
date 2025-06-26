@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Usuários - Sistema EPI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+  <nav class="navbar navbar-expand navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">Sistema EPI</a>
+      <div class="d-flex">
+        <a href="{{ url_for('main.cadastrar_usuario') }}" class="btn btn-success btn-sm me-2">Cadastrar Usuário</a>
+        <span class="navbar-text me-3">Olá, {{ current_user.username }}</span>
+        <a href="{{ url_for('main.logout') }}" class="btn btn-outline-light btn-sm">Sair</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-success">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    {% if users %}
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuário</th>
+            <th>Permissão</th>
+            <th>Editar</th>
+            <th>Excluir</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr>
+              <td>{{ user.id }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.role }}</td>
+              <td>
+                <a href="{{ url_for('main.editar_usuario', user_id=user.id) }}" class="btn btn-sm btn-warning">Editar</a>
+              </td>
+              <td>
+                {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('main.deletar_usuario', user_id=user.id) }}" style="display:inline;" onsubmit="return confirm('Confirma exclusão?');">
+                  {{ csrf_token() }}
+                  <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                </form>
+                {% else %}
+                  <span class="text-muted">Não pode excluir</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>Nenhum usuário cadastrado.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

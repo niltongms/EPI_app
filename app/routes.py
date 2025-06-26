@@ -1,63 +1,70 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from flask_login import login_user, logout_user, login_required, current_user
-from .models import User, EPI
-from . import db, login_manager
-from werkzeug.security import check_password_hash, generate_password_hash
+from flask_login import login_required, current_user
+from werkzeug.security import generate_password_hash
+from .models import User
+from . import db
 
 main = Blueprint('main', __name__)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-@main.route('/')
-def home():
-    return redirect(url_for('main.login'))
-
-@main.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-
-        if user and check_password_hash(user.password, password):
-            login_user(user)
+def admin_required(func):
+    from functools import wraps
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if current_user.role != 'admin':
+            flash('Acesso negado.')
             return redirect(url_for('main.dashboard'))
-        else:
-            flash('Usuário ou senha incorretos')
+        return func(*args, **kwargs)
+    return wrapper
 
-    return render_template('login.html')
-
-@main.route('/dashboard')
+@main.route('/usuarios')
 @login_required
-def dashboard():
-    epis = EPI.query.all()
-    return render_template('dashboard.html', user=current_user, epis=epis)
+@admin_required
+def usuarios():
+    users = User.query.all()
+    return render_template('usuarios.html', users=users)
 
-@main.route('/cadastrar_epi', methods=['GET', 'POST'])
+@main.route('/usuarios/editar/<int:user_id>', methods=['GET', 'POST'])
 @login_required
-def cadastrar_epi():
-    if current_user.role != 'admin':
-        flash('Acesso negado: apenas administradores podem cadastrar EPIs.')
-        return redirect(url_for('main.dashboard'))
-
+@admin_required
+def editar_usuario(user_id):
+    user = User.query.get_or_404(user_id)
     if request.method == 'POST':
-        nome = request.form.get('nome')
-        valor = request.form.get('valor')
-        localizacao = request.form.get('localizacao')
-        validade = request.form.get('validade')
+        username = request.form['username']
+        role = request.form['role']
+        password = request.form.get('password')
 
-        novo_epi = EPI(nome=nome, valor=valor, localizacao=localizacao, validade=validade)
-        db.session.add(novo_epi)
+        if not username or not role:
+            flash('Preencha todos os campos obrigatórios.')
+            return redirect(url_for('main.editar_usuario', user_id=user.id))
+
+        # Verifica se já existe outro usuário com esse username
+        user_exist = User.query.filter(User.username == username, User.id != user.id).first()
+        if user_exist:
+            flash('Usuário já existe.')
+            return redirect(url_for('main.editar_usuario', user_id=user.id))
+
+        user.username = username
+        user.role = role
+        if password:
+            user.password = generate_password_hash(password)
+
         db.session.commit()
-        flash('EPI cadastrado com sucesso!')
-        return redirect(url_for('main.dashboard'))
+        flash('Usuário atualizado com sucesso.')
+        return redirect(url_for('main.usuarios'))
 
-    return render_template('cadastrar_epi.html')
+    return render_template('editar_usuario.html', user=user)
 
-@main.route('/logout')
+@main.route('/usuarios/deletar/<int:user_id>', methods=['POST'])
 @login_required
-def logout():
-    logout_user()
-    return redirect(url_for('main.login'))
+@admin_required
+def deletar_usuario(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash('Você não pode excluir seu próprio usuário.')
+        return redirect(url_for('main.usuarios'))
+
+    db.session.delete(user)
+    db.session.commit()
+    flash('Usuário excluído com sucesso.')
+    return redirect(url_for('main.usuarios'))
