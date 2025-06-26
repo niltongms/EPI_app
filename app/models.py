@@ -20,6 +20,7 @@ class EPI(db.Model):
     valor = db.Column(db.Float, nullable=False)
     localizacao = db.Column(db.String(100), nullable=False)
     validade = db.Column(db.String(20), nullable=True)  # Pode ser melhorado com DateTime
+    ca = db.Column(db.String(50), nullable=True)  # Campo para C.A.
 
     def __repr__(self):
         return f'<EPI {self.nome}>'

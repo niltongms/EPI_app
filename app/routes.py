@@ -59,9 +59,10 @@ def cadastrar_epi():
         valor = request.form['valor']
         localizacao = request.form['localizacao']
         validade = request.form['validade']
+        ca = request.form['ca']  # Novo campo
 
-        if not nome or not valor or not localizacao:
-            flash('Preencha todos os campos obrigatórios.')
+        if not nome or not valor or not localizacao or not ca:
+            flash('Preencha todos os campos obrigatórios, incluindo C.A.')
             return redirect(url_for('main.cadastrar_epi'))
 
         try:
@@ -70,7 +71,7 @@ def cadastrar_epi():
             flash('Valor inválido.')
             return redirect(url_for('main.cadastrar_epi'))
 
-        novo = EPI(nome=nome, valor=valor, localizacao=localizacao, validade=validade)
+        novo = EPI(nome=nome, valor=valor, localizacao=localizacao, validade=validade, ca=ca)
         db.session.add(novo)
         db.session.commit()
         flash('EPI cadastrado com sucesso!')
@@ -89,9 +90,10 @@ def editar_epi(epi_id):
         valor = request.form['valor']
         localizacao = request.form['localizacao']
         validade = request.form['validade']
+        ca = request.form['ca']  # Novo campo
 
-        if not nome or not valor or not localizacao:
-            flash('Preencha todos os campos obrigatórios.')
+        if not nome or not valor or not localizacao or not ca:
+            flash('Preencha todos os campos obrigatórios, incluindo C.A.')
             return redirect(url_for('main.editar_epi', epi_id=epi.id))
 
         try:
@@ -104,6 +106,7 @@ def editar_epi(epi_id):
         epi.valor = valor
         epi.localizacao = localizacao
         epi.validade = validade
+        epi.ca = ca  # Atualiza o campo C.A.
         db.session.commit()
         flash('EPI atualizado.')
         return redirect(url_for('main.dashboard'))
@@ -212,23 +215,20 @@ def relatorio_epi():
     c.setFont("Helvetica", 12)
     y = height - 100
     total_valor = 0
-    total_quantidade = 0
 
     epis = EPI.query.all()
     for epi in epis:
-        linha = f"{epi.nome} - Quantidade: {epi.quantidade} - Valor: R${epi.valor:.2f}"
+        linha = f"{epi.nome} - C.A.: {epi.ca} - Valor: R${epi.valor:.2f}"
         c.drawString(50, y, linha)
         y -= 20
         total_valor += epi.valor
-        total_quantidade += epi.quantidade
 
         if y < 100:
             c.showPage()
             y = height - 50
 
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, y - 30, f"TOTAL Quantidade: {total_quantidade}")
-    c.drawString(50, y - 50, f"TOTAL Valor: R$ {total_valor:.2f}")
+    c.drawString(50, y - 30, f"TOTAL Valor: R$ {total_valor:.2f}")
 
     c.save()
     buffer.seek(0)
