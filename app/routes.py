@@ -1,9 +1,11 @@
-# app/routes.py
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from .models import User, EPI
 from . import db
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 main = Blueprint('main', __name__)
 
@@ -18,12 +20,10 @@ def admin_required(func):
         return func(*args, **kwargs)
     return wrapper
 
-# Rota raiz
 @main.route('/')
 def index():
     return redirect(url_for('main.login'))
 
-# Login
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -38,21 +38,18 @@ def login():
 
     return render_template('login.html')
 
-# Logout
 @main.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('main.login'))
 
-# Dashboard (lista de EPIs)
 @main.route('/dashboard')
 @login_required
 def dashboard():
     epis = EPI.query.all() if current_user.is_authenticated else []
     return render_template('dashboard.html', user=current_user, epis=epis)
 
-# Cadastro de EPI (admin somente)
 @main.route('/cadastrar_epi', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -81,7 +78,6 @@ def cadastrar_epi():
 
     return render_template('cadastrar_epi.html')
 
-# Editar EPI (admin somente)
 @main.route('/editar_epi/<int:epi_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -114,7 +110,6 @@ def editar_epi(epi_id):
 
     return render_template('editar_epi.html', epi=epi)
 
-# Deletar EPI (admin somente)
 @main.route('/deletar_epi/<int:epi_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -125,7 +120,6 @@ def deletar_epi(epi_id):
     flash('EPI excluído.')
     return redirect(url_for('main.dashboard'))
 
-# Listar usuários (admin somente)
 @main.route('/usuarios')
 @login_required
 @admin_required
@@ -133,7 +127,6 @@ def usuarios():
     users = User.query.all()
     return render_template('usuarios.html', users=users)
 
-# Cadastrar usuário (admin somente)
 @main.route('/cadastrar_usuario', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -161,7 +154,6 @@ def cadastrar_usuario():
 
     return render_template('cadastrar_usuario.html')
 
-# Editar usuário (admin somente)
 @main.route('/usuarios/editar/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -192,7 +184,6 @@ def editar_usuario(user_id):
 
     return render_template('editar_usuario.html', user=user)
 
-# Deletar usuário (admin somente)
 @main.route('/usuarios/deletar/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -206,3 +197,39 @@ def deletar_usuario(user_id):
     db.session.commit()
     flash('Usuário excluído.')
     return redirect(url_for('main.usuarios'))
+
+@main.route('/relatorio-epi')
+@login_required
+@admin_required
+def relatorio_epi():
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, height - 50, "Relatório de EPIs")
+
+    c.setFont("Helvetica", 12)
+    y = height - 100
+    total_valor = 0
+    total_quantidade = 0
+
+    epis = EPI.query.all()
+    for epi in epis:
+        linha = f"{epi.nome} - Quantidade: {epi.quantidade} - Valor: R${epi.valor:.2f}"
+        c.drawString(50, y, linha)
+        y -= 20
+        total_valor += epi.valor
+        total_quantidade += epi.quantidade
+
+        if y < 100:
+            c.showPage()
+            y = height - 50
+
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y - 30, f"TOTAL Quantidade: {total_quantidade}")
+    c.drawString(50, y - 50, f"TOTAL Valor: R$ {total_valor:.2f}")
+
+    c.save()
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name='relatorio_epi.pdf', mimetype='application/pdf')
