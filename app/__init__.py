@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -9,19 +10,19 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 
 def create_app():
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    load_dotenv(os.path.join(basedir, '..', '.env'))  # Carrega o .env na raiz do projeto
+
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'uma-chavesecreta-muito-segura'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'uma-chavesecreta-muito-segura')
 
-    # Detecta se está na Render com PostgreSQL
     database_url = os.getenv('DATABASE_URL')
     if database_url:
-        # Corrige prefixo antigo usado por algumas plataformas
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
-        basedir = os.path.abspath(os.path.dirname(__file__))
         instance_path = os.path.join(basedir, '..', 'instance')
         if not os.path.exists(instance_path):
             os.makedirs(instance_path)
