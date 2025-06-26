@@ -31,3 +31,5 @@ instance/
 
 # pip cache
 pip-log.txt
+
+Procfile

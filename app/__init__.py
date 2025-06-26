@@ -13,17 +13,21 @@ def create_app():
 
     app.config['SECRET_KEY'] = 'uma-chavesecreta-muito-segura'
 
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    instance_path = os.path.join(basedir, '..', 'instance')
-
-    if not os.path.exists(instance_path):
-        os.makedirs(instance_path)
-
-    db_path = os.path.join(instance_path, 'database.db')
-
-    print(f"Banco SQLite em: {db_path}")  # só aqui imprimo, depois que db_path existe
-
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    # Detecta se está na Render com PostgreSQL
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        # Corrige prefixo antigo usado por algumas plataformas
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        instance_path = os.path.join(basedir, '..', 'instance')
+        if not os.path.exists(instance_path):
+            os.makedirs(instance_path)
+        db_path = os.path.join(instance_path, 'database.db')
+        print(f"Banco SQLite em: {db_path}")
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
