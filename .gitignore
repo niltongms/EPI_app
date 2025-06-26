@@ -1,3 +1,33 @@
-# Cache do Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
 
+# Environment variables
+.env
+venv/
+env/
+ENV/
+.venv/
+
+# Instance folder (onde está seu database.db)
+instance/
+
+# SQLite database file
+*.db
+
+# VSCode settings (se usar VSCode)
+.vscode/
+
+# PyCharm settings (se usar PyCharm)
+.idea/
+
+# Logs e arquivos temporários
+*.log
+*.pot
+*.pyc
+*.swp
+.DS_Store
+
+# pip cache
+pip-log.txt

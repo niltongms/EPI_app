@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -10,15 +11,26 @@ csrf = CSRFProtect()
 def create_app():
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'uma-chavesecreta-muito-segura'  # Altere para algo bem secreto
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/database.db'
+    app.config['SECRET_KEY'] = 'uma-chavesecreta-muito-segura'
+
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    instance_path = os.path.join(basedir, '..', 'instance')
+
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path)
+
+    db_path = os.path.join(instance_path, 'database.db')
+
+    print(f"Banco SQLite em: {db_path}")  # só aqui imprimo, depois que db_path existe
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
 
-    # Certifique-se que esta função esteja **dentro** da create_app, após login_manager.init_app()
     @login_manager.user_loader
     def load_user(user_id):
         from .models import User

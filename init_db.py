@@ -5,7 +5,9 @@ from werkzeug.security import generate_password_hash
 
 app = create_app()
 
-instance_path = os.path.join(os.path.dirname(__file__), 'instance')
+basedir = os.path.abspath(os.path.dirname(__file__))
+instance_path = os.path.join(basedir, 'instance')
+
 if not os.path.exists(instance_path):
     os.makedirs(instance_path)
     print("Pasta 'instance' criada.")
