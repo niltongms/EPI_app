@@ -44,6 +44,7 @@
             <th>ID</th>
             <th>Nome</th>
             <th>Valor (R$)</th>
+            <th>C.A.</th>
             <th>Localização</th>
             <th>Validade</th>
             {% if user.role == 'admin' %}
@@ -58,6 +59,7 @@
               <td>{{ epi.id }}</td>
               <td>{{ epi.nome }}</td>
               <td>{{ '%.2f'|format(epi.valor) }}</td>
+              <td>{{ epi.ca }}</td>
               <td>{{ epi.localizacao }}</td>
               <td>{{ epi.validade or '-' }}</td>
               {% if user.role == 'admin' %}
